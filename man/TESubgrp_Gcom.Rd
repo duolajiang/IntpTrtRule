@@ -21,7 +21,10 @@ regression tree
 \if{html}{
 \out{<details open ><summary>Inherited methods</summary>}
 \itemize{
+\item \out{<span class="pkg-link" data-pkg="IntpTrtRule" data-topic="TEsubgrp" data-id="PlotCostSensTree">}\href{../../IntpTrtRule/html/TEsubgrp.html#method-PlotCostSensTree}{\code{IntpTrtRule::TEsubgrp$PlotCostSensTree()}}\out{</span>}
+\item \out{<span class="pkg-link" data-pkg="IntpTrtRule" data-topic="TEsubgrp" data-id="SankeyNetworkPlot">}\href{../../IntpTrtRule/html/TEsubgrp.html#method-SankeyNetworkPlot}{\code{IntpTrtRule::TEsubgrp$SankeyNetworkPlot()}}\out{</span>}
 \item \out{<span class="pkg-link" data-pkg="IntpTrtRule" data-topic="TEsubgrp" data-id="fit">}\href{../../IntpTrtRule/html/TEsubgrp.html#method-fit}{\code{IntpTrtRule::TEsubgrp$fit()}}\out{</span>}
+\item \out{<span class="pkg-link" data-pkg="IntpTrtRule" data-topic="TEsubgrp" data-id="print_leaf_nodes">}\href{../../IntpTrtRule/html/TEsubgrp.html#method-print_leaf_nodes}{\code{IntpTrtRule::TEsubgrp$print_leaf_nodes()}}\out{</span>}
 }
 \out{</details>}
 }
@@ -30,7 +33,7 @@ regression tree
 \if{latex}{\out{\hypertarget{method-new}{}}}
 \subsection{Method \code{new()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TESubgrp_Gcom$new(x, covs, trt)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{TESubgrp_Gcom$new(x, trt, y1, y0, y, xvars)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

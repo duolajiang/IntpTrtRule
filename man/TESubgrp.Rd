@@ -13,6 +13,9 @@ regression tree
 \itemize{
 \item \href{#method-new}{\code{TESubgrp$new()}}
 \item \href{#method-fit}{\code{TESubgrp$fit()}}
+\item \href{#method-print_leaf_nodes}{\code{TESubgrp$print_leaf_nodes()}}
+\item \href{#method-SankeyNetworkPlot}{\code{TESubgrp$SankeyNetworkPlot()}}
+\item \href{#method-PlotCostSensTree}{\code{TESubgrp$PlotCostSensTree()}}
 \item \href{#method-clone}{\code{TESubgrp$clone()}}
 }
 }
@@ -21,17 +24,28 @@ regression tree
 \if{latex}{\out{\hypertarget{method-new}{}}}
 \subsection{Method \code{new()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TESubgrp$new(x, z, xvars)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{TESubgrp$new(
+  x,
+  trt,
+  y.obs,
+  y1.hat.mean,
+  y0.hat.mean,
+  y1.hat.var = 0,
+  y0.hat.var = 0,
+  xvars
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{x}}{a dataframe of patient-level covariates}
+\item{\code{x}}{a dataframe of patient-level covariates,}
 
-\item{\code{z}}{a vector of binary treatment, 1 treatment and 0 observation}
+\item{\code{trt}}{a vector of binary treatment, 1 treatment and 0 observation}
 
-\item{\code{xvars}}{a character vector indicating the regressor variables names.}
+\item{\code{y.obs}}{a vector of binary observed outcome}
+
+\item{\code{xvars}}{a character vector indicating the regressor variables for subgroup discovery}
 }
 \if{html}{\out{</div>}}
 }
@@ -42,6 +56,49 @@ regression tree
 \subsection{Method \code{fit()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TESubgrp$fit(min.ndsz, pt, max.depth)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-print_leaf_nodes"></a>}}
+\if{latex}{\out{\hypertarget{method-print_leaf_nodes}{}}}
+\subsection{Method \code{print_leaf_nodes()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TESubgrp$print_leaf_nodes(
+  i = 1,
+  path = NULL,
+  data = self$tree,
+  dat = self$data,
+  cate = self$xvars.ctg
+)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SankeyNetworkPlot"></a>}}
+\if{latex}{\out{\hypertarget{method-SankeyNetworkPlot}{}}}
+\subsection{Method \code{SankeyNetworkPlot()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TESubgrp$SankeyNetworkPlot(
+  tree = self$tree,
+  dat = self$data,
+  cate = self$xvars.ctg,
+  link_group = FALSE
+)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-PlotCostSensTree"></a>}}
+\if{latex}{\out{\hypertarget{method-PlotCostSensTree}{}}}
+\subsection{Method \code{PlotCostSensTree()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TESubgrp$PlotCostSensTree(
+  tree.pruned = self$tree,
+  dat = self$data,
+  cate = self$xvars.ctg,
+  cost = 0
+)}\if{html}{\out{</div>}}
 }
 
 }

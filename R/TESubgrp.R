@@ -1,7 +1,10 @@
-#' @title regression tree
-#' @param x a dataframe of patient-level covariates
-#' @param z a vector of binary treatment, 1 treatment and 0 observation
-#' @param xvars a character vector indicating the regressor variables names.
+#' @title regression tree to discover subgroups with differential treatment effect
+#' @param x a dataframe of patient-level covariates,
+#' @param trt a vector of binary treatment, 1 treatment and 0 observation
+#' @param y.obs a vector of binary observed outcome
+#' @param y1.hat.mean,y0.hat.mean a vector of predicted value of potential outcomes under trt=1 and trt=0
+#' @param y1.hat.var,y0.hat.var an optional vector indicating variance of predicted value of potential outcomes, default value is 0
+#' @param xvars a character vector indicating the regressor variables for subgroup discovery
 #' @export
 #' @import dplyr
 #' @import R6
@@ -211,14 +214,14 @@ TESubgrp <- R6::R6Class(
         nodes$group <- c('nodes.group')
         my_color <- 'd3.scaleOrdinal() .domain(["1", "0","nodes.group"]) .range(["red", "silver","silver"])'
 
-        p <- sankeyNetwork(Links = Link, Nodes = nodes,
+        p <- networkD3::sankeyNetwork(Links = Link, Nodes = nodes,
                            Source = "IDsource", Target = "IDtarget",
                            Value = "value", NodeID = "name",LinkGroup = 'group',
                            NodeGroup = 'group',colourScale = my_color,fontSize = 15,
                            sinksRight=FALSE)
         p
       } else{
-        p <- sankeyNetwork(Links = Link, Nodes = nodes,
+        p <- networkD3::sankeyNetwork(Links = Link, Nodes = nodes,
                            Source = "IDsource", Target = "IDtarget",
                            Value = "value", NodeID = "name",fontSize = 15,
                            sinksRight=FALSE)
@@ -286,8 +289,10 @@ TESubgrp <- R6::R6Class(
                   dat.r <- dat[grp==0,]
                   n.l <- sum(grp)
                   n.r <- n-n.l
-                  score_cnode_l <- private$SS_score(dat.l$y1.hat.mean, dat.l$y0.hat.mean, dat.l$y1.hat.var, dat.l$y0.hat.var)
-                  score_cnode_r <- private$SS_score(dat.r$y1.hat.mean, dat.r$y0.hat.mean, dat.r$y1.hat.var, dat.r$y0.hat.var)
+                  score_cnode_l <- private$SS_score(dat.l$y1.hat.mean, dat.l$y0.hat.mean,
+                                                    dat.l$y1.hat.var, dat.l$y0.hat.var)
+                  score_cnode_r <- private$SS_score(dat.r$y1.hat.mean, dat.r$y0.hat.mean,
+                                                    dat.r$y1.hat.var, dat.r$y0.hat.var)
                   score <- score_node - (score_cnode_l+score_cnode_r)
                 }
                 #print(cbind(var=i, cut=j, score=score,var=variance))
