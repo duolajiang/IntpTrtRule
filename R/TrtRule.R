@@ -1,3 +1,6 @@
+#' @export
+#' @import dplyr
+#'
 TrtRule <- R6::R6Class(
   "TrtRule",
   public = list(
@@ -26,41 +29,110 @@ TrtRule <- R6::R6Class(
         select(var_names$xvars) %>%
         select_if(Negate(is.numeric)) %>%
         colnames()
-      self$person_id <- seq(dim(self$data)[1])
+      self$data$person_id <- seq(dim(self$data)[1])
       self$y1.hat <- y1.hat
       self$y0.hat <- y0.hat
+      self$data$y_pred <- 0
+      self$data$y_pred_trt <- -1
     },
-
 
     fit = function(){},
 
-    print_leaf_nodes = function(){},
+    # ==============================================
+    # PREDICT TREATMENT EFFECT
+    # test: data for prediction
+    # ctg: categorical covariate index
+    # ==============================================
+    predict = function(test){
+      #browser()
+      y <- NULL
+      for (i in seq(dim(test)[1])){
+        obs <- test[i,]
+        node.id <- 1
+        node <- self$tree[self$tree$node==node.id,]
+        while (!is.na(node$vname)){
+          varname <- as.character(node$vname)
+          if(is.element(node$var,self$var_names$xvars.ctg)){
+            cut.value <- as.character(node$cut)
+            if(is.element(obs[,varname],strsplit(cut.value,' '))){
+              node.id <- paste(node.id,'1',sep = '')
+            } else{
+              node.id <- paste(node.id,'2',sep = '')
+            }
+          } else{
+            # cant use as.numeric(node$cut); below is efficient thant as.numeric(as.character(node$cut))
+            cut.value <- as.numeric(levels(node$cut)[node$cut])
+            if(obs[,varname]<=cut.value){
+              node.id <- paste(node.id,'1',sep = '')
+            }else{
+              node.id <- paste(node.id,'2',sep = '')
+            }
+          }
+          node <- self$tree[self$tree$node==node.id,]
+        }
+        y <- c(y,node$mu)
+      }
+      return(y)
+    },
 
-    plot_sankey = function(group=TRUE){
-      if(group){
-        private$SankeyNetworkPlot(tree=self$tree_pruned,
-                                  dat=self$data,
-                                  cate=self$xvars.ctg,
-                                  link_group=TRUE)
+    est_loss_decision = function(){},
 
+    est_outcome_decision = function(){},
+
+    est_treatment_decision = function(){},
+
+
+    Print_leaf_nodes = function(pruned=FALSE){
+      if(isTRUE(pruned)){
+        private$print_leaf_nodes(i=1,
+                                 path=NULL,
+                                 data=self$tree_pruned,
+                                 dat=self$data,
+                                 cate=self$var_names$xvars.ctg)
+      } else {
+        private$print_leaf_nodes(i=1,
+                                 path=NULL,
+                                 data=self$tree,
+                                 dat=self$data,
+                                 cate=self$var_names$xvars.ctg)
+      }
+    },
+
+    plot_sankey = function(pruned=TRUE){
+      if(isTRUE(pruned)){
+        if(dim(self$tree_pruned)[1]==1) {
+          stop("no subgroup found given the cost")
+          } else{
+            private$SankeyNetworkPlot(tree=self$tree_pruned,
+                                    dat=self$data,
+                                    cate=self$var_names$xvars.ctg,
+                                    link_group=TRUE)
+            }
       } else{
         private$SankeyNetworkPlot(tree=self$tree,
                                   dat=self$data,
-                                  cate=self$xvars.ctg,
+                                  cate=self$var_names$xvars.ctg,
                                   link_group=FALSE)
 
       }
-    }
+    },
+
+    feature_importance = function(){}
 
 
   ),
 
   private = list(
 
-    fit_implementation = function(){
+    fit_implementation = function(data_id=NA){
       out <- list.nd <- temp.list <- temp.name <- NULL
-      list.nd <- list(self$data$person_id);
       name <- 1
+
+      if(is.na(data_id)){
+        list.nd <- list(self$data$person_id)
+      } else{
+        list.nd <- list(data_id)
+      }
 
       #i <- 1
       while (length(list.nd)!=0) {
@@ -71,8 +143,8 @@ TrtRule <- R6::R6Class(
                                        min.ndsz=self$constraints$min.ndsz,
                                        pt=self$constraints$pt,
                                        max.depth=self$constraints$max.depth,
-                                       split.var=self$xvars, ctg=self$xvars.ctg,
-                                       mtry=length(xvars))
+                                       split.var=self$var_names$xvars, ctg=self$var_names$xvars.ctg,
+                                       mtry=length(self$var_names$xvars))
 
             out <- rbind(out, split$info)
             if (!is.null(split$left)) {
@@ -226,7 +298,7 @@ TrtRule <- R6::R6Class(
       # CONTROL THE MAX TREE DEPTH
       depth <- nchar(name)
       if (depth <= max.depth && n >= min.ndsz && min(n.1, n.0) >= n0) {
-        print(c(n,min.ndsz))
+        #print(c(n,min.ndsz))
         m.try <- ifelse(is.null(mtry), length(split.var), mtry)
         for(var_name in split.var) {
           x <- dat[,var_name]; v.name <- var_name; temp <- sort(unique(x));
@@ -286,11 +358,103 @@ TrtRule <- R6::R6Class(
                                score=NA, se=sqrt(score_node/n))
         #print(variance)
       }
+
+      self$data[self$data$person_id %in% data_id, "y_pred"] <- mu
+      self$data[self$data$person_id %in% data_id, "y_pred_trt"] <- private$Optimal_trt_pred(mu)
+
       return(out)
 
     },
 
-    SS_score = function(person_id){}
+
+    print_leaf_nodes = function(i,path,data,dat,cate){
+      if(!is.element(i,data$node)){
+        return(NULL)
+      }
+
+      if (i!=1){
+        parent.node <- substr(i,1,nchar(i)-1)
+        vname <- as.character(data[data$node==parent.node,'vname'])
+        if(substr(i,nchar(i),nchar(i))==1){
+          if(is.element(vname,cate)){
+            cut <- as.character(unlist(strsplit(as.character(data[data$node==parent.node,'cut']),split=" ")))
+            cut.index <- is.element(levels(dat[,vname]),cut)
+            cut.val <- levels(dat[,vname])[cut.index]
+            cut <- NULL
+            for(j in 1:length(cut.val)){
+              cut <- paste(cut,cut.val[j],sep = ' ')
+            }
+            vname.con <- paste(vname,'in', cut, sep = ' ')
+            if (parent.node==1){
+              path <- paste(path,'{',vname.con,sep = ' ')
+            } else{
+              path <- paste(path,vname.con,sep = ' AND ')
+            }
+          } else{
+            cut <- data[data$node==parent.node,'cut']
+            vname.con <- paste(vname,'<=', cut, sep = ' ')
+            path <- ifelse(parent.node==1,paste(path,'{',vname.con,sep = ' '),paste(path,vname.con,sep = ' AND '))
+          }
+        } else{
+          if(is.element(vname,cate)){
+            cut <- as.character(unlist(strsplit(as.character(data[data$node==parent.node,'cut']),split=" ")))
+            cut.index <- !is.element(levels(dat[,vname]),cut)
+            cut.val <- levels(dat[,vname])[cut.index]
+            cut <- NULL
+            for(j in 1:length(cut.val)){
+              cut <- paste(cut,cut.val[j],sep = ' ')
+            }
+            vname.con <- paste(vname,'in', cut, sep = ' ')
+            if (parent.node==1){
+              path <- paste(path,'{',vname.con,sep = ' ')
+            } else{
+              path <- paste(path,vname.con,sep = ' AND ')
+            }
+          } else{
+            cut <- data[data$node==parent.node,'cut']
+            vname.con <- paste(vname,'>', cut, sep = ' ')
+            path <- ifelse(parent.node==1,paste(path,'{',vname.con,sep = ' '),paste(path,vname.con,sep = ' AND '))
+          }
+        }
+      }
+
+      if((!is.element(paste(i,1,sep = ''),data$node))&(!is.element(paste(i,2,sep = ''),data$node))){
+
+        path <- paste(path,'}',
+                      'ate=',round(data[data$node==i,'trt.effect'],3),
+                      'mu=',round(data[data$node==i,'mu'],3),
+                      # #'(',round(data[data$node==i,'lower'],3),',',round(data[data$node==i,'upper'],3),')',
+                      'size=',data[data$node==i,'size'],
+                      't%=', round(data[data$node==i,'n.t']/data[data$node==i,'size'],3)*100,
+                      'se=', format(data[data$node==i,'se'], digits=3),
+                      sep = ' ')
+        print(path)
+      }
+
+      private$print_leaf_nodes(paste(i,1,sep = ''),path,data,dat,cate)
+      private$print_leaf_nodes(paste(i,2,sep = ''),path,data,dat,cate)
+
+    },
+
+
+
+    Score_node = function(person_id){},
+
+    Optimal_trt_pred = function(mu){},
+
+
+    # ===========================================================================
+    # THE power.set() FUNCTION PROVIDES THE POWER SET FOR A CATEGORICAL VARIABLE
+    # ===========================================================================
+    power.set = function(x) {
+      if(length(x) == 0) return(vector(mode(x), 0))
+      x <- sort(unique(x)); n <- length(x); K <- NULL
+      for(m in x) K <- rbind(cbind(K, FALSE), cbind(K, TRUE))
+      out <- apply(K, 1, function(x, s) s[x], s = x)
+      out <- out[-c(1, length(out))]
+      l <- length(out); i <- 1
+      out[!sapply(out, length)>=ceiling(n/2+.5)]
+    }
 
   )
 
