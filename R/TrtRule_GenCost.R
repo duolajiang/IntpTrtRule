@@ -9,7 +9,7 @@ TrtRule_GenCost <- R6::R6Class(
 
     initialize = function(data,var_names,y1.hat,y0.hat,y1.var,y0.var){
       super$initialize(data,var_names,y1.hat,y0.hat)
-      if(is.null(y1.hat)){
+      if(is.null(dim(y1.hat))){
         self$data$y1.hat.mean <- y1.hat
         self$data$y0.hat.mean <- y0.hat
         self$data$y1.hat.var <- y1.var
