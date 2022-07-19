@@ -1,8 +1,6 @@
 library(data.table)
 source('~/Documents/iknl/code/function/function.R')
 source('~/Documents/iknl/code/function/policy_evaluation_function.R')
-source('~/Documents/iknl/code/function/loss_outcome_summary.R')
-source('~/Documents/iknl/code/function/tree_ITR.R')
 source('~/Documents/iknl/code/policy_evaluation/main_function.R')
 
 
