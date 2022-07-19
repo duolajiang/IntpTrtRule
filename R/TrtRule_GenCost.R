@@ -7,12 +7,19 @@ TrtRule_GenCost <- R6::R6Class(
 
     cost = NA,
 
-    initialize = function(data,var_names,y1.hat,y0.hat){
+    initialize = function(data,var_names,y1.hat,y0.hat,y1.var,y0.var){
       super$initialize(data,var_names,y1.hat,y0.hat)
-      self$data$y1.hat.mean <- apply(y1.hat,2,mean)
-      self$data$y0.hat.mean <- apply(y0.hat,2,mean)
-      self$data$y1.hat.var <- apply(y1.hat,2,var)
-      self$data$y0.hat.var <- apply(y0.hat,2,var)
+      if(is.null(y1.hat)){
+        self$data$y1.hat.mean <- y1.hat
+        self$data$y0.hat.mean <- y0.hat
+        self$data$y1.hat.var <- y1.var
+        self$data$y0.hat.var <- y0.var
+      } else {
+        self$data$y1.hat.mean <- apply(y1.hat,2,mean)
+        self$data$y0.hat.mean <- apply(y0.hat,2,mean)
+        self$data$y1.hat.var <- apply(y1.hat,2,var)
+        self$data$y0.hat.var <- apply(y0.hat,2,var)
+      }
     },
 
     fit = function(min.ndsz, pt, max.depth, rho, cost_t, cost_c){
