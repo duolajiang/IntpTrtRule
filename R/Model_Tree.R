@@ -126,7 +126,7 @@ Model_Tree <- R6::R6Class(
         for(var_name in split.var) {
           x <- dat[,var_name]; v.name <- var_name; temp <- sort(unique(x));
           if(length(temp) > 1) {
-            if (is.element(var_name,ctg)) zcut <- power.set(temp) ############################ CLASS VARIABLE
+            if (is.element(var_name,ctg)) zcut <- private$power.set(temp) ############################ CLASS VARIABLE
             else zcut <- temp[-length(temp)]
             # print(i); print(temp); print(zcut)
             for(j in zcut) {
@@ -186,6 +186,19 @@ Model_Tree <- R6::R6Class(
 
       return(out)
 
+    },
+
+    # ===========================================================================
+    # THE power.set() FUNCTION PROVIDES THE POWER SET FOR A CATEGORICAL VARIABLE
+    # ===========================================================================
+    power.set = function(x) {
+      if(length(x) == 0) return(vector(mode(x), 0))
+      x <- sort(unique(x)); n <- length(x); K <- NULL
+      for(m in x) K <- rbind(cbind(K, FALSE), cbind(K, TRUE))
+      out <- apply(K, 1, function(x, s) s[x], s = x)
+      out <- out[-c(1, length(out))]
+      l <- length(out); i <- 1
+      out[!sapply(out, length)>=ceiling(n/2+.5)]
     }
 
   )
