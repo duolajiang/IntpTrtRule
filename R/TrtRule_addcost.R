@@ -7,14 +7,24 @@ TrtRule_addcost <- R6::R6Class(
   public = list(
 
     cost = NA,
-
-    initialize = function(data,var_names,y1.hat,y0.hat){
+    # when is.null(dim(y1.hat)), then user must provide y1.var and y0.var
+    initialize = function(data,var_names,y1.hat,y0.hat,y1.hat.var=NULL,y0.hat.var=NULL){
       super$initialize(data,var_names,y1.hat,y0.hat)
-      self$data$y1.hat.mean <- apply(y1.hat,2,mean)
-      self$data$y0.hat.mean <- apply(y0.hat,2,mean)
-      self$data$y1.hat.var <- apply(y1.hat,2,var)
-      self$data$y0.hat.var <- apply(y0.hat,2,var)
+      if(is.null(dim(y1.hat))){
+        if(is.null(y1.hat.var)) {
+          stop("since you only provide the mean of y1.hat and y0.hat, you should provide variance of y1.hat and y0.hat!")
+        }
 
+        self$data$y1.hat.mean <- y1.hat
+        self$data$y0.hat.mean <- y0.hat
+        self$data$y1.hat.var <- y1.hat.var
+        self$data$y0.hat.var <- y0.hat.var
+      } else {
+        self$data$y1.hat.mean <- apply(y1.hat,2,mean)
+        self$data$y0.hat.mean <- apply(y0.hat,2,mean)
+        self$data$y1.hat.var <- apply(y1.hat,2,var)
+        self$data$y0.hat.var <- apply(y0.hat,2,var)
+      }
       self$data$y <- self$data$y1.hat.mean - self$data$y0.hat.mean
       self$data$y.var <- self$data$y1.hat.var + self$data$y0.hat.var
     },
