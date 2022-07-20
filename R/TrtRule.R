@@ -174,14 +174,14 @@ TrtRule <- R6::R6Class(
         if(is.element(var.name,cate)){
           cut <- as.character(unlist(strsplit(as.character(node.parent[,'cut']),split=" ")))
           cut.index <- is.element(levels(dat[,var.name]),cut)
-          cut.val.left <- levels(dat[,var.name])[cut.index];   cut.val.left <- CombineLevelsString(cut.val.left)
-          cut.val.right <- levels(dat[,var.name])[!cut.index]; cut.val.right <- CombineLevelsString(cut.val.right)
+          cut.val.left <- levels(dat[,var.name])[cut.index];   cut.val.left <- private$CombineLevelsString(cut.val.left)
+          cut.val.right <- levels(dat[,var.name])[!cut.index]; cut.val.right <- private$CombineLevelsString(cut.val.right)
           target <- ifelse(isleft==TRUE,paste(var.name,'=',cut.val.left,sep = ''),paste(var.name,'=',cut.val.right,sep = ''))
-          source <- ifelse(node.parent.id==1,'all',GetNodeName(tree,dat,cate,node.parent.id))
+          source <- ifelse(node.parent.id==1,'all',private$GetNodeName(tree,dat,cate,node.parent.id))
         } else{
           cut.val <- as.character(node.parent[,'cut'])
           target <- ifelse(isleft==TRUE,paste(var.name,'<=',cut.val,sep = ''),paste(var.name,'>',cut.val,sep = ''))
-          source <- ifelse(node.parent.id==1,'all',GetNodeName(tree,dat,cate,node.parent.id))
+          source <- ifelse(node.parent.id==1,'all',private$GetNodeName(tree,dat,cate,node.parent.id))
         }
         Link[i,'source'] <- source; Link[i,'target'] <- target; Link[i,'value'] <- tree[j,'size']
         Link[i,'IDsource'] <- rownames(node.parent); Link[i,'IDtarget'] <- rownames(tree[j,])
@@ -454,6 +454,38 @@ TrtRule <- R6::R6Class(
       out <- out[-c(1, length(out))]
       l <- length(out); i <- 1
       out[!sapply(out, length)>=ceiling(n/2+.5)]
+    },
+
+
+    # =============================================================
+    # for printing
+    # =============================================================
+    GetNodeName <- function(tree,dat,cate,nodeid){
+      #browser()
+      isleft <- (substr(nodeid,start = nchar(nodeid),stop = nchar(nodeid))==1)
+      node.parent.id <- substr(nodeid,start = 1,stop = nchar(nodeid)-1)
+      node.parent <- tree[tree$node==node.parent.id,]
+      var.name <- as.character(node.parent[,'vname'])
+      if(is.element(var.name,cate)){
+        cut <- as.character(unlist(strsplit(as.character(node.parent[,'cut']),split=" ")))
+        cut.index <- is.element(levels(dat[,var.name]),cut)
+        cut.val.left <- levels(dat[,var.name])[cut.index];   cut.val.left <- private$CombineLevelsString(cut.val.left)
+        cut.val.right <- levels(dat[,var.name])[!cut.index]; cut.val.right <- private$CombineLevelsString(cut.val.right)
+        target <- ifelse(isleft==TRUE,paste(var.name,'=',cut.val.left,sep = ''),paste(var.name,'=',cut.val.right,sep = ''))
+      } else{
+        cut.val <- as.character(node.parent[,'cut'])
+        target <- ifelse(isleft==TRUE,paste(var.name,'<=',cut.val,sep = ''),paste(var.name,'>',cut.val,sep = ''))
+      }
+      return(target)
+    },
+
+
+    CombineLevelsString <- function(stringarray){
+      single <- NULL
+      for(i in seq(length(stringarray))){
+        single <- paste(single,as.character(stringarray[i]),'')
+      }
+      return(single)
     }
 
   )
