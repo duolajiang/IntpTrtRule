@@ -303,7 +303,7 @@ TrtRule <- R6::R6Class(
         for(var_name in split.var) {
           x <- dat[,var_name]; v.name <- var_name; temp <- sort(unique(x));
           if(length(temp) > 1) {
-            if (is.element(var_name,ctg)) zcut <- power.set(temp) ############################ CLASS VARIABLE
+            if (is.element(var_name,ctg)) zcut <- private$power.set(temp) ############################ CLASS VARIABLE
             else zcut <- temp[-length(temp)]
             # print(i); print(temp); print(zcut)
             for(j in zcut) {
