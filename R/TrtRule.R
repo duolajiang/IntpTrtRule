@@ -460,7 +460,7 @@ TrtRule <- R6::R6Class(
     # =============================================================
     # for printing
     # =============================================================
-    GetNodeName <- function(tree,dat,cate,nodeid){
+    GetNodeName = function(tree,dat,cate,nodeid){
       #browser()
       isleft <- (substr(nodeid,start = nchar(nodeid),stop = nchar(nodeid))==1)
       node.parent.id <- substr(nodeid,start = 1,stop = nchar(nodeid)-1)
@@ -480,7 +480,7 @@ TrtRule <- R6::R6Class(
     },
 
 
-    CombineLevelsString <- function(stringarray){
+    CombineLevelsString = function(stringarray){
       single <- NULL
       for(i in seq(length(stringarray))){
         single <- paste(single,as.character(stringarray[i]),'')
