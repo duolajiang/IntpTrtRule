@@ -250,8 +250,8 @@ TrtRule <- R6::R6Class(
       }
       #print(i)
 
-      left.subtree <- prune_search(paste(i,1,sep = ''),data)
-      right.subtree <- prune_search(paste(i,2,sep = ''),data)
+      left.subtree <- private$prune_search(paste(i,1,sep = ''),data)
+      right.subtree <- private$prune_search(paste(i,2,sep = ''),data)
       tree <- rbind(data[data$node==i,],left.subtree,right.subtree)
 
       if((!is.null(left.subtree))&(!is.null(right.subtree))){
