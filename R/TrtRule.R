@@ -16,6 +16,7 @@ TrtRule <- R6::R6Class(
 
     tree = NA,
     tree_pruned = NA,
+    tree_topology = NA,
 
     constraints = list(min.ndsz=NA,
                        pt = NA,
@@ -101,6 +102,7 @@ TrtRule <- R6::R6Class(
     plot_sankey = function(pruned=TRUE){
       if(isTRUE(pruned)){
         if(dim(self$tree_pruned)[1]==1) {
+
           stop("no subgroup found given the cost")
           } else{
             private$SankeyNetworkPlot(tree=self$tree_pruned,
@@ -125,7 +127,9 @@ TrtRule <- R6::R6Class(
   private = list(
 
     fit_implementation = function(data_id=NA){
-      out <- list.nd <- temp.list <- temp.name <- NULL
+      #browser()
+
+      out <- out_topology <- list.nd <- temp.list <- temp.name <- NULL
       name <- 1
 
       if(is.na(data_id)){
@@ -147,6 +151,7 @@ TrtRule <- R6::R6Class(
                                        mtry=length(self$var_names$xvars))
 
             out <- rbind(out, split$info)
+            out_topology <- rbind(out_topology, split$topology)
             if (!is.null(split$left)) {
               temp.list <- c(temp.list, list(split$left, split$right))
               temp.name <- c(temp.name, split$name.l, split$name.r)
@@ -158,10 +163,13 @@ TrtRule <- R6::R6Class(
       }
       out$node <- as.character(out$node)
       out <- out[order(out$node),]
-      return(out)
+      out_topology <- out_topology %>% mutate_if(is.factor, as.character)
+      return(list(out=out,
+                  out_topology=out_topology))
     },
 
     SankeyNetworkPlot = function(tree,dat,cate,link_group){
+      #browser()
       rownames(tree) <- seq(0,dim(tree)[1]-1,1)
       Link <- data.frame(source=character(),target=character(),IDsource=numeric(),IDtarget=numeric(),stringsAsFactors = FALSE)
       i <- 1
@@ -172,16 +180,18 @@ TrtRule <- R6::R6Class(
         node.parent <- tree[tree$node==node.parent.id,]
         var.name <- as.character(node.parent[,'vname'])
         if(is.element(var.name,cate)){
-          cut <- as.character(unlist(strsplit(as.character(node.parent[,'cut']),split=" ")))
-          cut.index <- is.element(levels(dat[,var.name]),cut)
-          cut.val.left <- levels(dat[,var.name])[cut.index];   cut.val.left <- private$CombineLevelsString(cut.val.left)
-          cut.val.right <- levels(dat[,var.name])[!cut.index]; cut.val.right <- private$CombineLevelsString(cut.val.right)
+          #cut <- as.character(unlist(strsplit(as.character(node.parent[,'cut']),split=" ")))
+          #cut.index <- is.element(levels(dat[,var.name]),cut)
+          #cut.val.left <- levels(dat[,var.name])[cut.index];   cut.val.left <- private$CombineLevelsString(cut.val.left)
+          #cut.val.right <- levels(dat[,var.name])[!cut.index]; cut.val.right <- private$CombineLevelsString(cut.val.right)
+          cut.val.left <- self$tree_topology[self$tree_topology$node == node.parent.id, "left.node.var"]
+          cut.val.right <- self$tree_topology[self$tree_topology$node == node.parent.id, "right.node.var"]
           target <- ifelse(isleft==TRUE,paste(var.name,'=',cut.val.left,sep = ''),paste(var.name,'=',cut.val.right,sep = ''))
-          source <- ifelse(node.parent.id==1,'all',private$GetNodeName(tree,dat,cate,node.parent.id))
+          source <- ifelse(node.parent.id==1,'all',private$GetNodeName(tree,cate,node.parent.id))
         } else{
           cut.val <- as.character(node.parent[,'cut'])
           target <- ifelse(isleft==TRUE,paste(var.name,'<=',cut.val,sep = ''),paste(var.name,'>',cut.val,sep = ''))
-          source <- ifelse(node.parent.id==1,'all',private$GetNodeName(tree,dat,cate,node.parent.id))
+          source <- ifelse(node.parent.id==1,'all',private$GetNodeName(tree,cate,node.parent.id))
         }
         Link[i,'source'] <- source; Link[i,'target'] <- target; Link[i,'value'] <- tree[j,'size']
         Link[i,'IDsource'] <- rownames(node.parent); Link[i,'IDtarget'] <- rownames(tree[j,])
@@ -280,7 +290,7 @@ TrtRule <- R6::R6Class(
       # NOTE THAT CTG INDICATES THE COLUMNS FOR CATEGORICAL VARIABLES.
       #browser()
       out <- match.call(expand = F)
-      out$info <- out$name.l <- out$name.r <- out$left <- out$right <- out$... <- NULL
+      out$info <- out$name.l <- out$name.r <- out$topology <- out$left <- out$right <- out$... <- NULL
       name.l <- paste(name, 1, sep=""); name.r <- paste(name, 2, sep="")
       n <- length(data_id)
       var <- vname <- NA; cut <- NA; max.score <- 0;
@@ -338,16 +348,24 @@ TrtRule <- R6::R6Class(
         out$name.l <- name.l; out$name.r <- name.r
         if (is.element(var,ctg)) { ############################
           out$left  <- dat[is.element(dat[,var], best.cut),"person_id"]
-          out$right <- dat[!is.element(dat[,var], best.cut),"person_id"]}
+          out$right <- dat[!is.element(dat[,var], best.cut),"person_id"]
+          cut.var.l <- private$CombineLevelsString(unique(dat[is.element(dat[,var], best.cut),var]))
+          cut.var.r <- private$CombineLevelsString(unique(dat[!is.element(dat[,var], best.cut),var]))
+          }
         else {
           out$left  <- dat[dat[,var]<= best.cut,"person_id"]
           out$right <- dat[dat[,var]> best.cut, "person_id"]
+          cut.var.l <- paste(var, "<=", best.cut, sep="")
+          cut.var.r <- paste(var, ">", best.cut, sep="")
         }
         out$info <- data.frame(node=name, size = n, n.t=n.1, n.c=n.0, n.l=length(out$left),n.r=length(out$right),
                                trt.effect=trt.effect, mu=mu,
                                lower= quantile(y,0.025)[[1]], upper=quantile(y,0.975)[[1]],
                                var = var, vname=vname, cut= cut,
                                score=max.score, se=sqrt(score_node/n))
+
+        out$topology <- data.frame(node=name, left.node=name.l, right.node=name.r,
+                                   left.node.var=cut.var.l, right.node.var=cut.var.r)
         #print(variance)
       }
       else{
@@ -356,6 +374,9 @@ TrtRule <- R6::R6Class(
                                lower= quantile(y,0.025)[[1]], upper=quantile(y,0.975)[[1]],
                                var=NA, vname=NA, cut=NA,
                                score=NA, se=sqrt(score_node/n))
+
+        out$topology <- data.frame(node=name, left.node=NA, right.node=NA,
+                                   left.node.var=NA, right.node.var=NA)
         #print(variance)
       }
 
@@ -460,17 +481,19 @@ TrtRule <- R6::R6Class(
     # =============================================================
     # for printing
     # =============================================================
-    GetNodeName = function(tree,dat,cate,nodeid){
+    GetNodeName = function(tree,cate,nodeid){
       #browser()
       isleft <- (substr(nodeid,start = nchar(nodeid),stop = nchar(nodeid))==1)
       node.parent.id <- substr(nodeid,start = 1,stop = nchar(nodeid)-1)
       node.parent <- tree[tree$node==node.parent.id,]
       var.name <- as.character(node.parent[,'vname'])
       if(is.element(var.name,cate)){
-        cut <- as.character(unlist(strsplit(as.character(node.parent[,'cut']),split=" ")))
-        cut.index <- is.element(levels(dat[,var.name]),cut)
-        cut.val.left <- levels(dat[,var.name])[cut.index];   cut.val.left <- private$CombineLevelsString(cut.val.left)
-        cut.val.right <- levels(dat[,var.name])[!cut.index]; cut.val.right <- private$CombineLevelsString(cut.val.right)
+        #cut <- as.character(unlist(strsplit(as.character(node.parent[,'cut']),split=" ")))
+        #cut.index <- is.element(levels(dat[,var.name]),cut)
+        #cut.val.left <- levels(dat[,var.name])[cut.index];   cut.val.left <- private$CombineLevelsString(cut.val.left)
+        #cut.val.right <- levels(dat[,var.name])[!cut.index]; cut.val.right <- private$CombineLevelsString(cut.val.right)
+        cut.val.left <- self$tree_topology[self$tree_topology$node == node.parent.id, "left.node.var"]
+        cut.val.right <- self$tree_topology[self$tree_topology$node == node.parent.id, "right.node.var"]
         target <- ifelse(isleft==TRUE,paste(var.name,'=',cut.val.left,sep = ''),paste(var.name,'=',cut.val.right,sep = ''))
       } else{
         cut.val <- as.character(node.parent[,'cut'])

@@ -39,7 +39,9 @@ TrtRule_addcost <- R6::R6Class(
         self$constraints$max.depth <- max.depth
         self$cost <- cost
 
-        self$tree <- private$fit_implementation()
+        treeinfo_topology <- private$fit_implementation()
+        self$tree <- treeinfo_topology$out
+        self$tree_topology <- treeinfo_topology$out_topology
         tree_pruned <- self$tree
         tree_pruned$trt <- 1*(tree_pruned$trt.effect > self$cost)
         self$tree_pruned <- private$prune_search(1,tree_pruned)

@@ -42,6 +42,7 @@ obj <- TrtRule_addcost$new(data = data,
                                             y.obs="vitstat"),
                            y1.hat = p1_,
                            y0.hat = p_1)
+
 obj$fit(min.ndsz=10, pt=0.05, max.depth=6, cost= 0.03)
 #' print subgroups in tree or tree_pruned.
 #' @param pruned a logical, indicating print

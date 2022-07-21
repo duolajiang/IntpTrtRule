@@ -30,7 +30,9 @@ TrtRule_GenCost <- R6::R6Class(
                         cost_c=cost_c)
       self$data$y <- private$est_OptimalTreatment(rho,cost_t,cost_c)
 
-      self$tree <- private$fit_implementation()
+      treeinfo_topology <- private$fit_implementation()
+      self$tree <- treeinfo_topology$out
+      self$tree_topology <- treeinfo_topology$out_topology
       tree_pruned <- self$tree
       tree_pruned$trt <- 1*(tree_pruned$mu > 0.5)
       self$tree_pruned <- private$prune_search(1,tree_pruned)
