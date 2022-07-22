@@ -35,6 +35,7 @@ TrtRule <- R6::R6Class(
       self$y0.hat <- y0.hat
       self$data$y_pred <- 0
       self$data$y_pred_trt <- -1
+      self$data$node_id <- NA
     },
 
     fit = function(){},
@@ -300,6 +301,9 @@ TrtRule <- R6::R6Class(
       y <- dat$y
       mu <- mean(y)
 
+      # y.obs.bar <- mean(dat[,self$var_names$y.obs])
+      # y1.hat.bar <- mean(dat[,'y1.hat.mean'])
+      # y0.hat.bar <- mean(dat[,'y1.hat.mean'])
       # ============================================================
       # COMPUTE THE SCORE IN CURRENT NODE
       score_node <- private$Score_node(data_id)
@@ -382,6 +386,7 @@ TrtRule <- R6::R6Class(
 
       self$data[self$data$person_id %in% data_id, "y_pred"] <- mu
       self$data[self$data$person_id %in% data_id, "y_pred_trt"] <- private$Optimal_trt_pred(mu)
+      self$data[self$data$person_id %in% data_id, "node_id"] <- as.character(name)
 
       return(out)
 
