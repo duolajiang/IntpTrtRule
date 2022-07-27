@@ -1,25 +1,27 @@
-library(data.table)
-source('~/Documents/iknl/code/function/function.R')
-source('~/Documents/iknl/code/function/policy_evaluation_function.R')
-source('~/Documents/iknl/code/policy_evaluation/main_function.R')
-
-
-data <- DataImportGeneral(year=20156)
-data$lym_agioinvasie <- as.factor(ifelse((data$lymphomatic_invation_yes==1)|(data$agio_invation_EMVI==1)|(data$agio_invation_IMVI==1),'yes',
-                                         ifelse((data$lymphomatic_invation_no==1)&(data$agio_invation_no==1),'no','other')))
-
-target.index <- ((data$BRAF==1)|(data$BRAF==0)) & (data$pN==0) & (data$MSI!=9)
-data <- data[target.index,]
-data <- droplevels(data)
-
-load('~/Documents/iknl/code/policy_evaluation/post_y1_y0_2fp_20156.RData')
-length_test <- (dim(post_y1_y0)[2])/2
-p1_ <- post_y1_y0[,c(1:length_test)]
-p_1 <- post_y1_y0[,c((length_test+1):(2*length_test))]
-p1_ <- p1_[,target.index]
-p_1 <- p_1[,target.index]
+# library(data.table)
+# source('~/Documents/iknl/code/function/function.R')
+# source('~/Documents/iknl/code/function/policy_evaluation_function.R')
+# source('~/Documents/iknl/code/policy_evaluation/main_function.R')
+#
+#
+# data <- DataImportGeneral(year=20156)
+# data$lym_agioinvasie <- as.factor(ifelse((data$lymphomatic_invation_yes==1)|(data$agio_invation_EMVI==1)|(data$agio_invation_IMVI==1),'yes',
+#                                          ifelse((data$lymphomatic_invation_no==1)&(data$agio_invation_no==1),'no','other')))
+#
+# target.index <- ((data$BRAF==1)|(data$BRAF==0)) & (data$pN==0) & (data$MSI!=9)
+# data <- data[target.index,]
+# data <- droplevels(data)
+#
+# load('~/Documents/iknl/code/policy_evaluation/post_y1_y0_2fp_20156.RData')
+# length_test <- (dim(post_y1_y0)[2])/2
+# p1_ <- post_y1_y0[,c(1:length_test)]
+# p_1 <- post_y1_y0[,c((length_test+1):(2*length_test))]
+# p1_ <- p1_[,target.index]
+# p_1 <- p_1[,target.index]
 
 library(IntpTrtRule)
+load("data.RData")
+
 # use additive loss function.
 #' initialize an object of class TrtRule_addcost.
 #' @param data a patient-level data.frame N \times p,
@@ -51,7 +53,7 @@ obj$Print_leaf_nodes()
 #' plot the tree
 #' @param pruned a logical, indicating print
 #' self$tree or self$tree_pruned. TRUE by default.
-obj$plot_sankey(TRUE)
+obj$plot_sankey(FALSE)
 #' compute feature importance via permute feature,
 #' grow a tree model,
 #' and compute difference in score between
@@ -73,8 +75,24 @@ obj$fit(10, 0.1, 5, rho=0, cost_t, cost_c)
 obj$print_leaf_nodes()
 obj$plot_sankey()
 obj$feature_importance(20)
-
 # why the first one is more refined than
 
 
 
+# load("sankey.RData")
+#
+# cols <- colorRampPalette(c("grey", "red"))(10)
+# my_color <- paste("d3.scaleOrdinal() .domain([1,2,3,4,5,6,7,8,9,10,'C','T']).range([",
+#                   paste('"',cols,'"', collapse = ","),",'grey','red'])")
+# Link$IDrowsource <- as.numeric(Link$IDrowsource)
+# Link$IDrowtarget <- as.numeric(Link$IDrowtarget)
+#
+#
+# p <- networkD3::sankeyNetwork(Links = Link, Nodes = node,
+#                               Source = "IDrowsource", Target = "IDrowtarget",
+#                               Value = "value", NodeID = "name",
+#                               LinkGroup = 'group',
+#                               NodeGroup = 'group',
+#                               colourScale = my_color,fontSize = 15,
+#                               sinksRight=FALSE)
+# p

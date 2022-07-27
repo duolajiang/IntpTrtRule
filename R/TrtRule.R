@@ -172,8 +172,11 @@ TrtRule <- R6::R6Class(
     SankeyNetworkPlot = function(tree,dat,cate,link_group){
       #browser()
       rownames(tree) <- seq(0,dim(tree)[1]-1,1)
-      Link <- data.frame(source=character(),target=character(),IDsource=numeric(),IDtarget=numeric(),stringsAsFactors = FALSE)
-      i <- 1
+      Link <- data.frame(source=character(),target=character(),IDsource=numeric(),IDtarget=numeric(),IDrowsource = character(),IDrowtarget = character(),stringsAsFactors = FALSE)
+      node <- data.frame(id= character(),name = character(), group = numeric(), stringsAsFactors = FALSE)
+      node[1,"id"] <- "1"
+      node[1,"name"] <- "all"
+      node[1,"group"] <- tree[1,"mu"]
       for (j in seq(2,dim(tree)[1],1)) {
         nodeid <- tree[j,'node']
         isleft <- (substr(tree[j,'node'],start = nchar(tree[j,'node']),stop = nchar(tree[j,'node']))==1)
@@ -194,63 +197,124 @@ TrtRule <- R6::R6Class(
           target <- ifelse(isleft==TRUE,paste(var.name,'<=',cut.val,sep = ''),paste(var.name,'>',cut.val,sep = ''))
           source <- ifelse(node.parent.id==1,'all',private$GetNodeName(tree,cate,node.parent.id))
         }
-        Link[i,'source'] <- source; Link[i,'target'] <- target; Link[i,'value'] <- tree[j,'size']
-        Link[i,'IDsource'] <- rownames(node.parent); Link[i,'IDtarget'] <- rownames(tree[j,])
+        Link[j-1,'source'] <- source; Link[j-1,'target'] <- target; Link[j-1,'value'] <- tree[j,'size']
+        Link[j-1,'IDsource'] <- node.parent$node; Link[j-1,'IDtarget'] <- tree[j,'node']
+        Link[j-1,'group'] <- tree[j,'mu']
+
+        node[j,"id"] <- tree[j,'node']
+        node[j,"name"] <- target
+
         if(link_group==TRUE){
-          Link[i,'group'] <- ifelse(tree[j,'trt']==1,'1','0')
+          node_child <- paste(tree[j,"node"],"1",sep = "")
+          if(!(node_child %in% tree$node)) {
+            node[j,'group'] <- ifelse(tree[j,'trt']==1,'T','C')
+          } else {
+            node[j,'group'] <- tree[j,'mu']
+          }
+        } else {
+          node[j,"group"] <- tree[j,"mu"]
         }
-        i <- i+1
       }
 
+      node$row_id <- seq(dim(node)[1])
 
-      n_occur <- data.frame(table(Link$target))
-      n_occur <- n_occur[n_occur$Freq > 1,]
-      if(dim(n_occur)[1]!=0){
-        for (i in seq(dim(n_occur)[1])){
-          target <- n_occur[i,'Var1']
-          target.data <- Link[Link$target==target,]
-          k <- NULL
-          for (j in seq(dim(target.data)[1])) {
-            k <- paste(k,' ',sep = '')
-            id.row <- rownames(target.data[j,])
-            Link[id.row,'target'] <- paste(Link[id.row,'target'],k,sep = '')
-            id.target <- Link[id.row,'IDtarget']
-            if(is.element(id.target,Link$IDsource)){
-              Link[Link$IDsource==id.target,'source'] <- Link[id.row,'target']
+      for (i in seq(dim(Link)[1])) {
+        Link_i_IDrowsource <- node %>% filter(id == Link[i,"IDsource"]) %>% select(row_id)
+        Link[i,"IDrowsource"] <- Link_i_IDrowsource$row_id -1
+        Link_i_IDrowtarget <- node %>% filter(id == Link[i,"IDtarget"]) %>% select(row_id)
+        Link[i,"IDrowtarget"] <- Link_i_IDrowtarget$row_id -1
+      }
+
+      # n_occur <- data.frame(table(Link$target))
+      # n_occur <- n_occur[n_occur$Freq > 1,]
+      # if(dim(n_occur)[1]!=0){
+      #   for (i in seq(dim(n_occur)[1])){
+      #     target <- n_occur[i,'Var1']
+      #     target.data <- Link[Link$target==target,]
+      #     k <- NULL
+      #     for (j in seq(dim(target.data)[1])) {
+      #       k <- paste(k,' ',sep = '')
+      #       id.row <- rownames(target.data[j,])
+      #       Link[id.row,'target'] <- paste(Link[id.row,'target'],k,sep = '')
+      #       id.target <- Link[id.row,'IDtarget']
+      #       if(is.element(id.target,Link$IDsource)){
+      #         Link[Link$IDsource==id.target,'source'] <- Link[id.row,'target']
+      #       }
+      #     }
+      #   }
+      # }
+
+
+      # From these flows we need to create a node data frame: it lists every entities involved in the flow
+      # nodes <- data.frame(
+      #   name=c(as.character(Link$source),
+      #          as.character(Link$target)) %>% unique()
+      # )
+
+      # With networkD3, connection must be provided using id, not using real name like in the links dataframe.. So we need to reformat it.
+      # Link$IDsource <- match(Link$source, nodes$name)-1
+      # Link$IDtarget <- match(Link$target, nodes$name)-1
+
+      Link$group <- cut(Link$group, breaks = 10, labels = seq(10))
+      for(i in seq(dim(node)[1])){
+        if(i==1) {
+          node[i,'group'] <- 1
+        } else {
+          if(link_group==TRUE){
+            if(!node[i,'group'] %in% c("C","T")){
+              node[i,'group'] <- Link[Link$IDtarget==node[i,'id'],'group']
             }
+          } else{
+            node[i,'group'] <- Link[Link$IDtarget==node[i,'id'],'group']
           }
         }
       }
 
-
-      # From these flows we need to create a node data frame: it lists every entities involved in the flow
-      nodes <- data.frame(
-        name=c(as.character(Link$source),
-               as.character(Link$target)) %>% unique()
-      )
-
-
-      # With networkD3, connection must be provided using id, not using real name like in the links dataframe.. So we need to reformat it.
-      Link$IDsource <- match(Link$source, nodes$name)-1
-      Link$IDtarget <- match(Link$target, nodes$name)-1
+      #NOTE, must convert ID to numeric, otherwise, plots error, the same for group.
+      cols <- colorRampPalette(c("grey", "red"))(10)
+      Link$IDrowsource <- as.numeric(Link$IDrowsource)
+      Link$IDrowtarget <- as.numeric(Link$IDrowtarget)
+      Link$group <- as.character(Link$group)
+      node$group <- as.character(node$group)
 
       if(link_group==TRUE){
-        nodes$group <- c('nodes.group')
-        my_color <- 'd3.scaleOrdinal() .domain(["1", "0","nodes.group"]) .range(["red", "silver","silver"])'
-
-        p <- networkD3::sankeyNetwork(Links = Link, Nodes = nodes,
-                                      Source = "IDsource", Target = "IDtarget",
+        my_color <- paste("d3.scaleOrdinal() .domain([1,2,3,4,5,6,7,8,9,10,'C','T']).range([",
+                          paste('"',cols,'"', collapse = ","),",'white','red'])")
+        p <- networkD3::sankeyNetwork(Links = Link, Nodes = node,
+                                      Source = "IDrowsource", Target = "IDrowtarget",
                                       Value = "value", NodeID = "name",LinkGroup = 'group',
-                                      NodeGroup = 'group',colourScale = my_color,fontSize = 15,
+                                      NodeGroup = 'group',
+                                      colourScale = my_color,fontSize = 15,
                                       sinksRight=FALSE)
         p
       } else{
-        p <- networkD3::sankeyNetwork(Links = Link, Nodes = nodes,
-                                      Source = "IDsource", Target = "IDtarget",
-                                      Value = "value", NodeID = "name",fontSize = 15,
+        my_color <- paste("d3.scaleOrdinal() .domain([1,2,3,4,5,6,7,8,9,10]).range([",
+                          paste('"',cols,'"', collapse = ","),"])")
+        p <- networkD3::sankeyNetwork(Links = Link, Nodes = node,
+                                      Source = "IDrowsource", Target = "IDrowtarget",
+                                      Value = "value", NodeID = "name",LinkGroup = 'group',
+                                      NodeGroup = 'group',
+                                      colourScale = my_color,fontSize = 15,
                                       sinksRight=FALSE)
         p
       }
+
+      # if(link_group==TRUE){
+      #   p <- networkD3::sankeyNetwork(Links = Link, Nodes = node,
+      #                                 Source = "IDrowsource", Target = "IDrowtarget",
+      #                                 Value = "value", NodeID = "name",LinkGroup = 'group',
+      #                                 NodeGroup = 'group',
+      #                                 colourScale = my_color,fontSize = 15,
+      #                                 sinksRight=FALSE)
+      #   p
+      # } else{
+      #   p <- networkD3::sankeyNetwork(Links = Link, Nodes = node,
+      #                                 Source = "IDrowsource", Target = "IDrowtarget",
+      #                                 LinkGroup = 'group',NodeGroup = 'group',
+      #                                 Value = "value", NodeID = "name",fontSize = 15,
+      #                                 sinksRight=FALSE)
+      #   p
+      # }
     },
 
     prune_search = function(i,data){
