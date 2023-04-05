@@ -105,7 +105,7 @@ TrtRule_GenCost <- R6::R6Class(
     Score_node = function(person_id){
       y <- self$data[self$data$person_id %in% person_id, "y"]
       mu <- mean(y)
-      score <- -sum(y*log(mu)+(1-y)*log(1-mu))
+      score <- -mean(y*log(mu)+(1-y)*log(1-mu))
       return(score)
     },
 
