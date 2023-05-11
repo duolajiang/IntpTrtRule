@@ -45,7 +45,7 @@ obj <- TrtRule_addcost$new(data = data,
                            y1.hat = p1_,
                            y0.hat = p_1)
 
-obj$fit(min.ndsz=10, pt=0.05, max.depth=6, cost= 0.03)
+obj$fit(min.ndsz=10, pt=0.05, max.depth=3, score.threhold = 0, cost= 0.05)
 #' print subgroups in tree or tree_pruned.
 #' @param pruned a logical, indicating print
 #' self$tree or self$tree_pruned. FALSE by default.
@@ -71,7 +71,7 @@ obj <- TrtRule_GenCost$new(data,
                                             trt = "combined_chemo",
                                             y.obs = "vitstat"),
                            p1_,p_1)
-obj$fit(10, 0.1, 5, rho=0, cost_t, cost_c)
+obj$fit(min.ndsz=10, pt=0.05, max.depth=3, score.threhold = 0.01,rho=0, cost_t, cost_c)
 obj$print_leaf_nodes()
 obj$plot_sankey()
 obj$feature_importance(20)

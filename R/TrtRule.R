@@ -407,7 +407,7 @@ TrtRule <- R6::R6Class(
                 score <- score_node - (score_cnode_l+score_cnode_r)
               }
               #print(cbind(var=i, cut=j, score=score,var=variance))
-              if (!is.na(score) && score > max.score) {
+              if (isTRUE((!is.na(score)) && (score > max.score))) {
                 max.score <- score; var <- var_name; vname <- v.name; cut <- cut1; best.cut<-j
               }
             }

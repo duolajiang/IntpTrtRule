@@ -31,10 +31,10 @@ TrtRule_addcost <- R6::R6Class(
 
     fit = function(min.ndsz, pt, max.depth, score.threhold,cost){
       #browser()
-      if ((is.na(self$cost))|!((self$constraints$min.ndsz==min.ndsz)&
+      if (isTRUE((is.na(self$cost))|!((self$constraints$min.ndsz==min.ndsz)&
                                (self$constraints$pt==pt)&
                                (self$constraints$max.depth==max.depth)&
-                               (self$constraints$score.threhold==score.threhold))){
+                               (self$constraints$score.threhold==score.threhold)))){
         self$constraints$min.ndsz <- min.ndsz
         self$constraints$pt <- pt
         self$constraints$max.depth <- max.depth
