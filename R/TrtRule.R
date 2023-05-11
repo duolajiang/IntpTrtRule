@@ -360,7 +360,7 @@ TrtRule <- R6::R6Class(
       out$info <- out$name.l <- out$name.r <- out$topology <- out$left <- out$right <- out$... <- NULL
       name.l <- paste(name, 1, sep=""); name.r <- paste(name, 2, sep="")
       n <- length(data_id)
-      var <- vname <- NA; cut <- NA; max.score <- score.threhold;
+      var <- vname <- NA; cut <- NA; max.score <- 0;
       dat <- self$data[self$data$person_id %in% data_id, ]
       trt <- dat[,self$var_names$trt]
       trt.effect <- mean(dat$y1.hat.mean-dat$y0.hat.mean)
