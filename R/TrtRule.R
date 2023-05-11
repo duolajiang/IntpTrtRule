@@ -20,7 +20,8 @@ TrtRule <- R6::R6Class(
 
     constraints = list(min.ndsz=NA,
                        pt = NA,
-                       max.depth = NA),
+                       max.depth = NA,
+                       score.threhold = NA),
 
     initialize = function(data,var_names,
                           y1.hat,y0.hat){
@@ -148,6 +149,7 @@ TrtRule <- R6::R6Class(
                                        min.ndsz=self$constraints$min.ndsz,
                                        pt=self$constraints$pt,
                                        max.depth=self$constraints$max.depth,
+                                       score.threhold = self$constraints$score.threhold,
                                        split.var=self$var_names$xvars, ctg=self$var_names$xvars.ctg,
                                        mtry=length(self$var_names$xvars))
 
@@ -349,7 +351,7 @@ TrtRule <- R6::R6Class(
     },
 
     partition = function(data_id, name,
-                         min.ndsz, pt, max.depth,
+                         min.ndsz, pt, max.depth, score.threhold,
                          split.var, ctg,
                          mtry){
       # NOTE THAT CTG INDICATES THE COLUMNS FOR CATEGORICAL VARIABLES.
@@ -358,7 +360,7 @@ TrtRule <- R6::R6Class(
       out$info <- out$name.l <- out$name.r <- out$topology <- out$left <- out$right <- out$... <- NULL
       name.l <- paste(name, 1, sep=""); name.r <- paste(name, 2, sep="")
       n <- length(data_id)
-      var <- vname <- NA; cut <- NA; max.score <- 0;
+      var <- vname <- NA; cut <- NA; max.score <- score.threhold;
       dat <- self$data[self$data$person_id %in% data_id, ]
       trt <- dat[,self$var_names$trt]
       trt.effect <- mean(dat$y1.hat.mean-dat$y0.hat.mean)

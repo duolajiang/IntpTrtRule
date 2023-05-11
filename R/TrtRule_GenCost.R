@@ -22,10 +22,11 @@ TrtRule_GenCost <- R6::R6Class(
       }
     },
 
-    fit = function(min.ndsz, pt, max.depth, rho, cost_t, cost_c){
+    fit = function(min.ndsz, pt, max.depth, score.threhold, rho, cost_t, cost_c){
       self$constraints$min.ndsz <- min.ndsz
       self$constraints$pt <- pt
       self$constraints$max.depth <- max.depth
+      self$constraints$score.threhold <- score.threhold
       self$cost <- list(cost_t=cost_t,
                         cost_c=cost_c)
       self$data$y <- private$est_OptimalTreatment(rho,cost_t,cost_c)
