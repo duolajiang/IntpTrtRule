@@ -29,16 +29,17 @@ TrtRule_addcost <- R6::R6Class(
       self$data$y.var <- self$data$y1.hat.var + self$data$y0.hat.var
     },
 
-    fit = function(min.ndsz, pt, max.depth, score.threhold,cost){
+    fit = function(min.ndsz, pt, max.depth, #score.threhold,
+                   cost){
       #browser()
       if (isTRUE((is.na(self$cost))|!((self$constraints$min.ndsz==min.ndsz)&
                                (self$constraints$pt==pt)&
-                               (self$constraints$max.depth==max.depth)&
-                               (self$constraints$score.threhold==score.threhold)))){
+                               (self$constraints$max.depth==max.depth)))){
+                               #&(self$constraints$score.threhold==score.threhold)))){
         self$constraints$min.ndsz <- min.ndsz
         self$constraints$pt <- pt
         self$constraints$max.depth <- max.depth
-        self$constraints$score.threhold
+        #self$constraints$score.threhold
         self$cost <- cost
 
         treeinfo_topology <- private$fit_implementation()
